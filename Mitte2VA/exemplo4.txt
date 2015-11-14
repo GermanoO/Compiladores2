@@ -1,0 +1,2 @@
+//exemplo de menos unario (precisa alterar a gramatica)
+- 2 + 3 + 4 / 5;
