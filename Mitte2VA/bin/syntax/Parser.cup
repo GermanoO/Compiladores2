@@ -148,7 +148,9 @@ comando  ::= decl_variavel
 
 atribuicao ::= lista_idents ATRIBUICAO expressao PONTO_VIRGULA ;
 
-iteracao ::= KEY_WHILE ABRE_PAR expressao FECHA_PAR comando ;
+iteracao ::= KEY_WHILE ABRE_PAR expressao:exp FECHA_PAR comando:cmdwhile 
+			{:	RESULT = new Iteracao(exp, cmdwhile);	:}
+			;
 
 decisao ::= KEY_IF ABRE_PAR expressao:exp FECHA_PAR comando:cmdif KEY_ELSE comando:cmdelse
 			{: RESULT = new Decisao(exp, cmdif, cmdelse);  :}
@@ -158,13 +160,20 @@ decisao ::= KEY_IF ABRE_PAR expressao:exp FECHA_PAR comando:cmdif KEY_ELSE coman
             
             ;
 
-escrita ::= KEY_PRINT ABRE_PAR expressao FECHA_PAR PONTO_VIRGULA ;
-
-chamada_func_cmd ::= KEY_CALL chamada_func PONTO_VIRGULA ;
-
-retorno ::= KEY_RETURN expressao PONTO_VIRGULA ;
+escrita ::= KEY_PRINT ABRE_PAR expressao:exp FECHA_PAR PONTO_VIRGULA 
+			{:	RESULT = new Escrita(exp);	:}
+			;
+			
+chamada_func_cmd ::= KEY_CALL chamada_func:chamada PONTO_VIRGULA 
+					{:	RESULT = chamada;	:}
+			;
+			
+retorno ::= KEY_RETURN expressao:exp PONTO_VIRGULA 
+			{:	RESULT = new Retorno(exp);	:}
+			;
 
 chamada_func ::= IDENTIFICADOR ABRE_PAR lista_exprs FECHA_PAR ;
+				
 
 lista_exprs ::= expressao resto_lista_exprs
               | /*vazio*/
@@ -174,7 +183,8 @@ resto_lista_exprs ::= resto_lista_exprs VIRGULA expressao
                     | /*vazio*/
                     ;
 
-expressao ::= expressao SOMA expressao
+expressao ::= expressao:esq SOMA expressao:dir
+        {:	RESULT = new ExpAritmetica(esq, dir, "+");	:}
         
         | expressao:esq SUB expressao:dir
         {: RESULT = new ExpAritmetica(esq, dir, "-");  :}
@@ -182,30 +192,56 @@ expressao ::= expressao SOMA expressao
         | expressao:esq MULT expressao:dir
         {:	RESULT = new ExpAritmetica(esq, dir, "*");	:}
         
-        | expressao DIV expressao
-        | expressao RESTO expressao
-        | expressao AND expressao
-        | expressao OR expressao
-        | expressao OP_IGUAL expressao
-        | expressao OP_DIFERENTE expressao
-        | expressao OP_MENOR_QUE expressao
-        | expressao OP_MENOR_OU_IGUAL expressao
-        | expressao OP_MAIOR_OU_IGUAL expressao
-        | expressao OP_MAIOR_QUE expressao
+        | expressao:esq DIV expressao:dir
+        {: RESULT = new ExpAritmetica(esq, dir, "/");  :}
+        
+        | expressao:esq RESTO expressao:dir
+        {: RESULT = new ExpAritmetica(esq, dir, "%");  :}
+        
+        | expressao:esq AND expressao:dir
+        {:	RESULT = new ExpLogica(esq, dir, "&&");	:}
+        
+        | expressao:esq OR expressao:dir
+        {:	RESULT = new ExpLogica(esq, dir, "||");	:}
+        
+        | expressao:esq OP_IGUAL expressao:dir
+        {:	RESULT = new ExprRelacional(esq, dir, "=");	:}
+        
+        | expressao:esq OP_DIFERENTE expressao:dir
+        {:	RESULT = new ExprRelacional(esq, dir, "!=");	:}
+        
+        | expressao:esq OP_MENOR_QUE expressao:dir
+        {:	RESULT = new ExprRelacional(esq, dir, "<");	:}
+        
+        | expressao:esq OP_MENOR_OU_IGUAL expressao:dir
+        {:	RESULT = new ExprRelacional(esq, dir, ">");	:}
+        
+        | expressao:esq OP_MAIOR_OU_IGUAL expressao:dir
+        {:	RESULT = new ExprRelacional(esq, dir, ">=");	:}
+        
+        | expressao:esq OP_MAIOR_QUE expressao:dir
+        {:	RESULT = new ExprRelacional(esq, dir, "<=");	:}
         
         | expr_basica:exp
         {:  RESULT = exp;  :}
         ;
 
-expr_basica ::= ABRE_PAR expressao FECHA_PAR 
-         | NOT expr_basica
-         | SUB expr_basica
+expr_basica ::= ABRE_PAR expressao:exp FECHA_PAR 
+         		{:  RESULT = exp;  :}
+         
+         | NOT expr_basica:expb
+         {:	RESULT = new ExpUnaria("!",expb);	:}
+         
+         | SUB expr_basica:expb
+         {:	RESULT = new ExpUnaria("-",expb);	:}
          
          | INT_LITERAL:lex
          {:  int valor = Integer.parseInt(lex); 
              RESULT = new IntLiteral(valor);    :}
          
-         | CHAR_LITERAL
+         | CHAR_LITERAL:lex
+         {: char ch = lex.charAt(0);
+         RESULT = new CharLiteral(ch);	:}
          
          | FLOAT_LITERAL:lex
          {:	float valor = Float.parseFloat(lex);
@@ -214,7 +250,10 @@ expr_basica ::= ABRE_PAR expressao FECHA_PAR
          | STRING_LITERAL:lex
          {: RESULT = new StringLiteral(lex);   :}
          
-         | IDENTIFICADOR
+         | IDENTIFICADOR:ident
+         {:	RESULT = new ExprIdentificador(ident);	:}
+         
          | chamada_func
+         
          ;
 

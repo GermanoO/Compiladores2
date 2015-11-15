@@ -1,5 +1,11 @@
 package arvore.expressao;
 
 public class ExprIdentificador implements Expressao {
-	//completar
+	
+	private String identificador;
+	
+	public ExprIdentificador(String identificador){
+		this.identificador = identificador;
+		
+	}
 }

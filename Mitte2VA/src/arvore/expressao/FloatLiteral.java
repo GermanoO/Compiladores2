@@ -9,5 +9,5 @@ public class FloatLiteral implements Expressao {
 		super();
 		this.floatLiteral = floatLiteral;
 	}
-	//completar...
+	
 }
