@@ -5,8 +5,14 @@ import java.util.*;
 import arvore.*;
 import arvore.expressao.*;
 import arvore.comando.*;
+import java.util.List;
 
 
+action code {:
+    //cria um atributo para guardar os valores das variáveis
+    private List<Expressao> listaExprs = new ArrayList<Expressao>();
+
+:}
 
 /*****  Terminais (tokens) *****/
 
@@ -72,12 +78,12 @@ non terminal 		bloco;
 non terminal 		lista_comandos;
 non terminal Comando comando;
 non terminal 		atribuicao;
-non terminal 		iteracao;
+non terminal Iteracao		iteracao;
 non terminal Decisao decisao;
 non terminal 		escrita;
 non terminal 		chamada_func_cmd;
 non terminal 		retorno;
-non terminal 		chamada_func;
+non terminal ChamadaFunc	chamada_func;
 non terminal		lista_exprs;
 non terminal 		resto_lista_exprs;
 non terminal Expressao expressao;
@@ -137,7 +143,8 @@ lista_comandos ::= lista_comandos comando
 
 comando  ::= decl_variavel
            | atribuicao
-           | iteracao           
+           | iteracao:i
+           {:	RESULT = i;	:}          
            | decisao:d 
              {: RESULT = d; :}
            | escrita
@@ -164,22 +171,27 @@ escrita ::= KEY_PRINT ABRE_PAR expressao:exp FECHA_PAR PONTO_VIRGULA
 			{:	RESULT = new Escrita(exp);	:}
 			;
 			
-chamada_func_cmd ::= KEY_CALL chamada_func:chamada PONTO_VIRGULA 
-					{:	RESULT = chamada;	:}
+chamada_func_cmd ::= KEY_CALL chamada_func:chamadaFunc PONTO_VIRGULA 
+					{:	RESULT = new ChamadaFuncCmd(chamadaFunc);	:}
 			;
 			
 retorno ::= KEY_RETURN expressao:exp PONTO_VIRGULA 
 			{:	RESULT = new Retorno(exp);	:}
 			;
 
-chamada_func ::= IDENTIFICADOR ABRE_PAR lista_exprs FECHA_PAR ;
+chamada_func ::= IDENTIFICADOR:nomeFunc ABRE_PAR lista_exprs FECHA_PAR 
+				{:	RESULT = new ChamadaFunc(nomeFunc,listaExprs);	:}
+				;
 				
 
-lista_exprs ::= expressao resto_lista_exprs
+lista_exprs ::= expressao:exp resto_lista_exprs
+				{:	RESULT = listaExprs.add(exp);	:}
+
               | /*vazio*/
               ; 
 
-resto_lista_exprs ::= resto_lista_exprs VIRGULA expressao
+resto_lista_exprs ::= resto_lista_exprs VIRGULA expressao:exp
+					{:	RESULT = listaExprs.add(exp);	:}
                     | /*vazio*/
                     ;
 
